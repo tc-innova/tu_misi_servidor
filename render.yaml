@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: tu-misi-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt && pip install asyncpg --only-binary :all:
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENTORNO
+        value: produccion
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: CORS_ALLOW_CREDENTIALS
+        value: true
+      - key: CORS_ALLOW_METHODS
+        value: "*"
+      - key: CORS_ALLOW_HEADERS
+        value: "*"
