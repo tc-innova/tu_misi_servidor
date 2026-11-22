@@ -5,34 +5,22 @@ from app.nucleo.base_datos import obtener_db
 from app.nucleo.permisos import requiere_roles
 from app.nucleo.limitador import limiter
 from app.esquemas.usuario import (
-    UsuarioCrear, UsuarioRespuesta, UsuarioAdministradorCrear, UsuarioClienteCrear,
+    UsuarioCrear, UsuarioRespuesta, UsuarioClientePruebaCrear,
     CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta
 )
 from app.servicios.usuario import ServicioUsuario
 
 router = APIRouter()
 
-@router.post("/administrador", response_model=UsuarioRespuesta, status_code=201)
+@router.post("/cliente-prueba", response_model=UsuarioRespuesta, status_code=201)
 @limiter.limit("3/minute")
-async def crear_usuario_administrador(
+async def crear_usuario_cliente_prueba(
     request: Request,
-    usuario: UsuarioAdministradorCrear,
+    usuario: UsuarioClientePruebaCrear,
     db: AsyncSession = Depends(obtener_db)
 ):
     servicio = ServicioUsuario(db)
-    id_rol_admin = await servicio.obtener_id_rol_por_nombre("administrador")
-    return await servicio.crear(usuario, id_rol_admin)
-
-@router.post("/cliente", response_model=UsuarioRespuesta, status_code=201)
-@limiter.limit("5/minute")
-async def crear_usuario_cliente(
-    request: Request,
-    usuario: UsuarioClienteCrear,
-    db: AsyncSession = Depends(obtener_db)
-):
-    servicio = ServicioUsuario(db)
-    id_rol_cliente = await servicio.obtener_id_rol_por_nombre("cliente")
-    return await servicio.crear(usuario, id_rol_cliente)
+    return await servicio.crear_con_tenant(usuario, usuario.nombre_negocio)
 
 @router.post("/", response_model=UsuarioRespuesta, status_code=201)
 async def crear_usuario(

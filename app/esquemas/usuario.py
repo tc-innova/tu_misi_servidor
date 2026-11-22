@@ -46,13 +46,17 @@ class UsuarioCrear(UsuarioBase):
     id_tenant: int
     contrasenia: str
 
-class UsuarioAdministradorCrear(UsuarioBase):
-    id_tenant: int
+class UsuarioClientePruebaCrear(BaseModel):
+    nombre_negocio: str
+    nombres: str
+    apellido_paterno: str
+    apellido_materno: Optional[str] = None
+    fecha_nacimiento: date
+    sexo: bool
+    ci: str
+    usuario: str
     contrasenia: str
-
-class UsuarioClienteCrear(UsuarioBase):
-    id_tenant: int
-    contrasenia: str
+    activo: bool = True
 
 class UsuarioRespuesta(UsuarioBase):
     id_usuario: int
