@@ -8,7 +8,6 @@ class ServicioTipoProducto:
         self.db = db
 
     async def crear(self, tipo_producto: TipoProductoCrear) -> TipoProductoRespuesta:
-        # Verificar si ya existe el nombre para ese tenant
         query_verificar = text("""
             SELECT id_tipo_producto 
             FROM tipo_productos 
@@ -24,7 +23,6 @@ class ServicioTipoProducto:
         if existente:
             raise ExcepcionConflicto(f"El tipo de producto '{tipo_producto.nombre}' ya existe")
 
-        # Insertar nuevo tipo de producto
         query_insertar = text("""
             INSERT INTO tipo_productos (id_tenant, nombre)
             VALUES (:id_tenant, :nombre)
@@ -71,10 +69,8 @@ class ServicioTipoProducto:
         id_tipo_producto: int,
         datos: TipoProductoActualizar
     ) -> TipoProductoRespuesta:
-        # Verificar que existe
         await self.obtener_por_id(id_tipo_producto)
         
-        # Construir UPDATE dinámico solo con campos proporcionados
         campos_actualizar = datos.model_dump(exclude_unset=True)
         
         if not campos_actualizar:
@@ -97,7 +93,6 @@ class ServicioTipoProducto:
         return TipoProductoRespuesta(**fila)
 
     async def eliminar(self, id_tipo_producto: int):
-        # Verificar que existe
         await self.obtener_por_id(id_tipo_producto)
         
         query = text("""
@@ -107,4 +102,5 @@ class ServicioTipoProducto:
         
         await self.db.execute(query, {"id_tipo_producto": id_tipo_producto})
         await self.db.commit()
+
 

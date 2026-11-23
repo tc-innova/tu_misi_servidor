@@ -18,10 +18,6 @@ async def crear_tipo_producto(
     db: AsyncSession = Depends(obtener_db),
     usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Clientes autenticados pueden crear tipos de productos para su tenant.
-    El id_tenant del tipo de producto debe coincidir con el id_tenant del usuario.
-    """
     if tipo_producto.id_tenant != usuario["id_tenant"]:
         raise HTTPException(
             status_code=403,
@@ -36,10 +32,6 @@ async def listar_tipos_productos(
     db: AsyncSession = Depends(obtener_db),
     usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Lista los tipos de productos del tenant del usuario autenticado.
-    Cada usuario solo ve las categorías de su propio tenant.
-    """
     servicio = ServicioTipoProducto(db)
     return await servicio.listar_por_tenant(usuario["id_tenant"])
 
@@ -49,10 +41,6 @@ async def obtener_tipo_producto(
     db: AsyncSession = Depends(obtener_db),
     usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Obtiene un tipo de producto específico.
-    Solo puede ver si pertenece a su tenant.
-    """
     servicio = ServicioTipoProducto(db)
     tipo_producto = await servicio.obtener_por_id(id_tipo_producto)
     
@@ -71,10 +59,6 @@ async def actualizar_tipo_producto(
     db: AsyncSession = Depends(obtener_db),
     usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Actualiza un tipo de producto.
-    Solo puede editar categorías de su propio tenant.
-    """
     servicio = ServicioTipoProducto(db)
     tipo_existente = await servicio.obtener_por_id(id_tipo_producto)
     
@@ -92,10 +76,6 @@ async def eliminar_tipo_producto(
     db: AsyncSession = Depends(obtener_db),
     usuario = Depends(obtener_usuario_actual)
 ):
-    """
-    Elimina un tipo de producto.
-    Solo puede eliminar categorías de su propio tenant.
-    """
     servicio = ServicioTipoProducto(db)
     tipo_existente = await servicio.obtener_por_id(id_tipo_producto)
     
@@ -106,4 +86,5 @@ async def eliminar_tipo_producto(
         )
     
     await servicio.eliminar(id_tipo_producto)
+
 
