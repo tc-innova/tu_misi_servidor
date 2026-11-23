@@ -14,6 +14,13 @@ class ExcepcionDuplicado(HTTPException):
             detail=f"{entidad} con {campo} ya existe"
         )
 
+class ExcepcionConflicto(HTTPException):
+    def __init__(self, mensaje: str):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=mensaje
+        )
+
 class ExcepcionNoAutorizado(HTTPException):
     def __init__(self, mensaje: str = "No autorizado"):
         super().__init__(

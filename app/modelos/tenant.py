@@ -6,3 +6,4 @@ class Tenant(Base):
     
     id_tenant = Column(BigInteger, primary_key=True, autoincrement=True)
     nombre = Column(String(150), nullable=False, unique=True)
+

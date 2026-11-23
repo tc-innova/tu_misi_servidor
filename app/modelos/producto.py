@@ -1,15 +1,5 @@
 from sqlalchemy import Column, BigInteger, String, Numeric, Integer, ForeignKey, LargeBinary
-from sqlalchemy.orm import relationship
 from app.nucleo.base_datos import Base
-
-class TipoProducto(Base):
-    __tablename__ = "tipo_productos"
-    
-    id_tipo_producto = Column(BigInteger, primary_key=True, autoincrement=True)
-    id_tenant = Column(BigInteger, ForeignKey("tenants.id_tenant"), nullable=False)
-    nombre = Column(String(100), nullable=False)
-    
-    tenant = relationship("Tenant")
 
 class Producto(Base):
     __tablename__ = "productos"
@@ -21,9 +11,6 @@ class Producto(Base):
     precio = Column(Numeric(12, 2), nullable=False)
     cantidad = Column(Integer, nullable=False)
     cantidad_minima = Column(Integer, nullable=False)
-    
-    tipo_producto = relationship("TipoProducto")
-    fotos = relationship("FotoProducto", back_populates="producto")
 
 class FotoProducto(Base):
     __tablename__ = "fotos_productos"
@@ -31,5 +18,4 @@ class FotoProducto(Base):
     id_producto = Column(BigInteger, ForeignKey("productos.id_producto"), primary_key=True)
     numero = Column(Integer, primary_key=True)
     foto = Column(LargeBinary, nullable=False)
-    
-    producto = relationship("Producto", back_populates="fotos")
+
