@@ -11,7 +11,28 @@ class ServicioUsuario:
     
     @manejar_integridad("Usuario", "CI o usuario")
     @auditar("usuarios", "crear")
-    async def crear(self, usuario, id_tenant: int, id_rol: int = None):
+    async def crear(self, usuario):
+        query_rol = text("""
+            SELECT nombre FROM roles WHERE id_rol = :id_rol
+        """)
+        resultado_rol = await self.db.execute(query_rol, {"id_rol": usuario.id_rol})
+        rol = resultado_rol.mappings().first()
+        
+        if not rol:
+            raise ExcepcionNoEncontrado("Rol")
+        
+        if rol["nombre"] == "administrador":
+            from app.nucleo.excepciones import ExcepcionNoAutorizado
+            raise ExcepcionNoAutorizado("No se puede asignar rol de administrador")
+        
+        query_tenant = text("""
+            INSERT INTO tenants (nombre)
+            VALUES (:nombre)
+            RETURNING id_tenant
+        """)
+        resultado_tenant = await self.db.execute(query_tenant, {"nombre": usuario.nombre_negocio})
+        id_tenant = resultado_tenant.scalar()
+        
         contrasenia_hash = obtener_hash_contrasenia(usuario.contrasenia)
         
         query_usuario = text("""
@@ -45,16 +66,66 @@ class ServicioUsuario:
             "activo": True
         })
         
-        if id_rol:
-            query_rol = text("""
-                INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
-                VALUES (:id_usuario, :id_tenant, :id_rol)
-            """)
-            await self.db.execute(query_rol, {
-                "id_usuario": id_usuario,
-                "id_tenant": id_tenant,
-                "id_rol": id_rol
-            })
+        query_rol_insert = text("""
+            INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
+            VALUES (:id_usuario, :id_tenant, :id_rol)
+        """)
+        await self.db.execute(query_rol_insert, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "id_rol": usuario.id_rol
+        })
+        
+        await self.db.commit()
+        return await self.obtener_por_id(id_usuario)
+    
+    @manejar_integridad("Usuario", "CI o usuario")
+    @auditar("usuarios", "actualizar")
+    async def actualizar(self, id_usuario: int, datos: dict):
+        campos = []
+        valores = {"id_usuario": id_usuario}
+        
+        if "nombres" in datos:
+            campos.append("nombres = :nombres")
+            valores["nombres"] = datos["nombres"]
+        
+        if "apellido_paterno" in datos:
+            campos.append("apellido_paterno = :apellido_paterno")
+            valores["apellido_paterno"] = datos["apellido_paterno"]
+        
+        if "apellido_materno" in datos:
+            campos.append("apellido_materno = :apellido_materno")
+            valores["apellido_materno"] = datos["apellido_materno"]
+        
+        if "fecha_nacimiento" in datos:
+            campos.append("fecha_nacimiento = :fecha_nacimiento")
+            valores["fecha_nacimiento"] = datos["fecha_nacimiento"]
+        
+        if "sexo" in datos:
+            campos.append("sexo = :sexo")
+            valores["sexo"] = datos["sexo"]
+        
+        if "ci" in datos:
+            campos.append("ci = :ci")
+            valores["ci"] = datos["ci"]
+        
+        if "activo" in datos:
+            campos.append("activo = :activo")
+            valores["activo"] = datos["activo"]
+        
+        if not campos:
+            return await self.obtener_por_id(id_usuario)
+        
+        query = text(f"""
+            UPDATE usuarios
+            SET {", ".join(campos)}
+            WHERE id_usuario = :id_usuario
+            RETURNING id_usuario
+        """)
+        
+        resultado = await self.db.execute(query, valores)
+        if not resultado.scalar():
+            raise ExcepcionNoEncontrado("Usuario")
         
         await self.db.commit()
         return await self.obtener_por_id(id_usuario)
@@ -330,3 +401,63 @@ class ServicioUsuario:
             "limit": limit
         })
         return resultado.mappings().all()
+
+    async def listar_roles_disponibles(self):
+        query = text("""
+            SELECT id_rol, nombre
+            FROM roles
+            WHERE nombre != 'administrador'
+            ORDER BY nombre
+        """)
+        resultado = await self.db.execute(query)
+        return resultado.mappings().all()
+    
+    async def asignar_rol(self, id_usuario: int, id_tenant: int, id_rol: int):
+        query_rol = text("""
+            SELECT nombre FROM roles WHERE id_rol = :id_rol
+        """)
+        resultado_rol = await self.db.execute(query_rol, {"id_rol": id_rol})
+        rol = resultado_rol.mappings().first()
+        
+        if not rol:
+            raise ExcepcionNoEncontrado("Rol")
+        
+        if rol["nombre"] == "administrador":
+            from app.nucleo.excepciones import ExcepcionNoAutorizado
+            raise ExcepcionNoAutorizado("No se puede asignar rol de administrador")
+        
+        query_verificar = text("""
+            SELECT 1 FROM usuarios WHERE id_usuario = :id_usuario
+        """)
+        resultado = await self.db.execute(query_verificar, {"id_usuario": id_usuario})
+        if not resultado.scalar():
+            raise ExcepcionNoEncontrado("Usuario")
+        
+        query_insert = text("""
+            INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
+            VALUES (:id_usuario, :id_tenant, :id_rol)
+            ON CONFLICT (id_usuario, id_tenant, id_rol) DO NOTHING
+        """)
+        await self.db.execute(query_insert, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "id_rol": id_rol
+        })
+        await self.db.commit()
+        
+        return {"mensaje": "Rol asignado correctamente"}
+    
+    async def remover_rol(self, id_usuario: int, id_rol: int):
+        query = text("""
+            DELETE FROM usuarios_roles
+            WHERE id_usuario = :id_usuario AND id_rol = :id_rol
+            RETURNING id_usuario
+        """)
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "id_rol": id_rol
+        })
+        if not resultado.scalar():
+            raise ExcepcionNoEncontrado("Rol de usuario")
+        
+        await self.db.commit()

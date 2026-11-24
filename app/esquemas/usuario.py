@@ -43,6 +43,8 @@ class UsuarioBase(BaseModel):
     activo: bool = True
 
 class UsuarioCrear(UsuarioBase):
+    nombre_negocio: str
+    id_rol: int
     contrasenia: str
 
 class UsuarioClientePruebaCrear(BaseModel):

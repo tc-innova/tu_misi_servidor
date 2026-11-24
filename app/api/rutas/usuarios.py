@@ -39,15 +39,14 @@ async def crear_usuario(
     usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
-    id_tenant = usuario_actual.get("id_tenant")
-    return await servicio.crear(usuario, id_tenant)
+    return await servicio.crear(usuario)
 
 @router.post("/{id_usuario}/celulares", response_model=CelularRespuesta, status_code=201)
 async def agregar_celular_usuario(
     id_usuario: int,
     celular: CelularBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_celular(id_usuario, celular)
@@ -57,7 +56,7 @@ async def agregar_correo_usuario(
     id_usuario: int,
     correo: CorreoBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_correo(id_usuario, correo)
@@ -66,7 +65,7 @@ async def agregar_correo_usuario(
 async def listar_celulares_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_celulares(id_usuario)
@@ -75,7 +74,7 @@ async def listar_celulares_usuario(
 async def listar_correos_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_correos(id_usuario)
@@ -84,7 +83,7 @@ async def listar_correos_usuario(
 async def eliminar_celular_usuario(
     id_celular: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_celular(id_celular)
@@ -93,7 +92,7 @@ async def eliminar_celular_usuario(
 async def eliminar_correo_usuario(
     id_correo: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_correo(id_correo)
@@ -112,7 +111,46 @@ async def listar_usuarios(
 async def obtener_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.obtener_por_id(id_usuario)
+
+@router.put("/{id_usuario}", response_model=UsuarioRespuesta)
+async def actualizar_usuario(
+    id_usuario: int,
+    datos: dict,
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(requiere_roles("administrador"))
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.actualizar(id_usuario, datos)
+
+@router.get("/roles/disponibles", response_model=List[RolRespuesta])
+async def listar_roles_disponibles(
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(requiere_roles("administrador"))
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.listar_roles_disponibles()
+
+@router.post("/{id_usuario}/roles", status_code=201)
+async def asignar_rol_usuario(
+    id_usuario: int,
+    id_tenant: int,
+    id_rol: int,
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(requiere_roles("administrador"))
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.asignar_rol(id_usuario, id_tenant, id_rol)
+
+@router.delete("/{id_usuario}/roles/{id_rol}", status_code=204)
+async def remover_rol_usuario(
+    id_usuario: int,
+    id_rol: int,
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(requiere_roles("administrador"))
+):
+    servicio = ServicioUsuario(db)
+    await servicio.remover_rol(id_usuario, id_rol)
