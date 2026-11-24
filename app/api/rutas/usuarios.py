@@ -22,6 +22,16 @@ async def crear_usuario_cliente_prueba(
     servicio = ServicioUsuario(db)
     return await servicio.crear_con_tenant(usuario, usuario.nombre_negocio)
 
+@router.post("/admin-prueba", response_model=UsuarioRespuesta, status_code=201)
+@limiter.limit("3/minute")
+async def crear_usuario_admin_prueba(
+    request: Request,
+    usuario: UsuarioClientePruebaCrear,
+    db: AsyncSession = Depends(obtener_db)
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.crear_admin_con_tenant(usuario, usuario.nombre_negocio)
+
 @router.post("/", response_model=UsuarioRespuesta, status_code=201)
 async def crear_usuario(
     usuario: UsuarioCrear,

@@ -49,8 +49,6 @@ class ServicioUsuario:
         await self.db.commit()
         return await self.obtener_por_id(id_usuario)
     
-    @manejar_integridad("Usuario cliente prueba", "CI o usuario")
-    @auditar("usuarios", "crear_con_tenant")
     async def crear_con_tenant(self, usuario_data, nombre_negocio: str):
         query_tenant = text("""
             INSERT INTO tenants (nombre)
@@ -63,15 +61,14 @@ class ServicioUsuario:
         contrasenia_hash = obtener_hash_contrasenia(usuario_data.contrasenia)
         
         query_usuario = text("""
-            INSERT INTO usuarios (id_tenant, nombres, apellido_paterno, apellido_materno, 
+            INSERT INTO usuarios (nombres, apellido_paterno, apellido_materno, 
                                  fecha_nacimiento, sexo, ci, usuario, contrasenia, activo)
-            VALUES (:id_tenant, :nombres, :apellido_paterno, :apellido_materno,
+            VALUES (:nombres, :apellido_paterno, :apellido_materno,
                     :fecha_nacimiento, :sexo, :ci, :usuario, :contrasenia, :activo)
             RETURNING id_usuario
         """)
         
         resultado = await self.db.execute(query_usuario, {
-            "id_tenant": id_tenant,
             "nombres": usuario_data.nombres,
             "apellido_paterno": usuario_data.apellido_paterno,
             "apellido_materno": usuario_data.apellido_materno,
@@ -84,18 +81,109 @@ class ServicioUsuario:
         })
         id_usuario = resultado.scalar()
         
+        query_relacion = text("""
+            INSERT INTO usuarios_tenants (id_usuario, id_tenant, activo)
+            VALUES (:id_usuario, :id_tenant, :activo)
+        """)
+        await self.db.execute(query_relacion, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "activo": True
+        })
+        
         id_rol_cliente = await self.obtener_id_rol_por_nombre("cliente")
         query_rol = text("""
-            INSERT INTO usuarios_roles (id_usuario, id_rol)
-            VALUES (:id_usuario, :id_rol)
+            INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
+            VALUES (:id_usuario, :id_tenant, :id_rol)
         """)
         await self.db.execute(query_rol, {
             "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
             "id_rol": id_rol_cliente
         })
         
         await self.db.commit()
-        return await self.obtener_por_id(id_usuario)
+        
+        return {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "nombres": usuario_data.nombres,
+            "apellido_paterno": usuario_data.apellido_paterno,
+            "apellido_materno": usuario_data.apellido_materno,
+            "fecha_nacimiento": usuario_data.fecha_nacimiento,
+            "sexo": usuario_data.sexo,
+            "ci": usuario_data.ci,
+            "usuario": usuario_data.usuario,
+            "activo": usuario_data.activo
+        }
+    
+    async def crear_admin_con_tenant(self, usuario_data, nombre_negocio: str):
+        query_tenant = text("""
+            INSERT INTO tenants (nombre)
+            VALUES (:nombre)
+            RETURNING id_tenant
+        """)
+        resultado_tenant = await self.db.execute(query_tenant, {"nombre": nombre_negocio})
+        id_tenant = resultado_tenant.scalar()
+        
+        contrasenia_hash = obtener_hash_contrasenia(usuario_data.contrasenia)
+        
+        query_usuario = text("""
+            INSERT INTO usuarios (nombres, apellido_paterno, apellido_materno, 
+                                 fecha_nacimiento, sexo, ci, usuario, contrasenia, activo)
+            VALUES (:nombres, :apellido_paterno, :apellido_materno,
+                    :fecha_nacimiento, :sexo, :ci, :usuario, :contrasenia, :activo)
+            RETURNING id_usuario
+        """)
+        
+        resultado = await self.db.execute(query_usuario, {
+            "nombres": usuario_data.nombres,
+            "apellido_paterno": usuario_data.apellido_paterno,
+            "apellido_materno": usuario_data.apellido_materno,
+            "fecha_nacimiento": usuario_data.fecha_nacimiento,
+            "sexo": usuario_data.sexo,
+            "ci": usuario_data.ci,
+            "usuario": usuario_data.usuario,
+            "contrasenia": contrasenia_hash,
+            "activo": usuario_data.activo
+        })
+        id_usuario = resultado.scalar()
+        
+        query_relacion = text("""
+            INSERT INTO usuarios_tenants (id_usuario, id_tenant, activo)
+            VALUES (:id_usuario, :id_tenant, :activo)
+        """)
+        await self.db.execute(query_relacion, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "activo": True
+        })
+        
+        id_rol_admin = await self.obtener_id_rol_por_nombre("administrador")
+        query_rol = text("""
+            INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
+            VALUES (:id_usuario, :id_tenant, :id_rol)
+        """)
+        await self.db.execute(query_rol, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "id_rol": id_rol_admin
+        })
+        
+        await self.db.commit()
+        
+        return {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "nombres": usuario_data.nombres,
+            "apellido_paterno": usuario_data.apellido_paterno,
+            "apellido_materno": usuario_data.apellido_materno,
+            "fecha_nacimiento": usuario_data.fecha_nacimiento,
+            "sexo": usuario_data.sexo,
+            "ci": usuario_data.ci,
+            "usuario": usuario_data.usuario,
+            "activo": usuario_data.activo
+        }
     
     @manejar_integridad("Celular", "número")
     @auditar("celulares_usuarios", "crear")
