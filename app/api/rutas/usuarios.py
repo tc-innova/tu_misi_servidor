@@ -6,7 +6,7 @@ from app.nucleo.permisos import requiere_roles
 from app.nucleo.limitador import limiter
 from app.esquemas.usuario import (
     UsuarioCrear, UsuarioRespuesta, UsuarioClientePruebaCrear,
-    CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta
+    CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta, RolRespuesta
 )
 from app.servicios.usuario import ServicioUsuario
 
