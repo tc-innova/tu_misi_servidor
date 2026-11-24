@@ -27,46 +27,38 @@ async def obtener_usuario_actual(
         )
     
     id_usuario = payload.get("id_usuario")
-    id_tenant = payload.get("id_tenant")
+    tenants = payload.get("tenants", [])
     
-    if not id_usuario or not id_tenant:
+    if not id_usuario or not tenants:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token incompleto"
         )
     
     query = text("""
-        SELECT u.id_usuario, u.activo as usuario_activo, ut.activo as tenant_activo
-        FROM usuarios u
-        INNER JOIN usuarios_tenants ut ON u.id_usuario = ut.id_usuario
-        WHERE u.id_usuario = :id_usuario AND ut.id_tenant = :id_tenant
+        SELECT activo
+        FROM usuarios
+        WHERE id_usuario = :id_usuario
     """)
     
-    resultado = await db.execute(query, {"id_usuario": id_usuario, "id_tenant": id_tenant})
+    resultado = await db.execute(query, {"id_usuario": id_usuario})
     usuario = resultado.mappings().first()
     
     if not usuario:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no encontrado en este tenant"
+            detail="Usuario no encontrado"
         )
     
-    if not usuario["usuario_activo"]:
+    if not usuario["activo"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Usuario inactivo"
         )
     
-    if not usuario["tenant_activo"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario inactivo en este negocio"
-        )
-    
     return {
         "id_usuario": id_usuario,
-        "id_tenant": id_tenant,
-        "roles": payload.get("roles", [])
+        "tenants": tenants
     }
 
 async def obtener_usuario_temporal(

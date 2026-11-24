@@ -9,13 +9,14 @@ def requiere_roles(*roles_permitidos: str):
         usuario = Depends(obtener_usuario_actual),
         db: AsyncSession = Depends(obtener_db)
     ):
-        roles_usuario = await obtener_roles_usuario(
-            usuario["id_usuario"], 
-            usuario["id_tenant"], 
-            db
-        )
+        tenants = usuario.get("tenants", [])
         
-        tiene_permiso = any(rol in roles_usuario for rol in roles_permitidos)
+        tiene_permiso = False
+        for tenant in tenants:
+            roles_tenant = tenant.get("roles", [])
+            if any(rol in roles_tenant for rol in roles_permitidos):
+                tiene_permiso = True
+                break
         
         if not tiene_permiso:
             raise HTTPException(

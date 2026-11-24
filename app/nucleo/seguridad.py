@@ -13,33 +13,21 @@ def verificar_contrasenia(contrasenia_plana: str, contrasenia_hash: str) -> bool
 def obtener_hash_contrasenia(contrasenia: str) -> str:
     return contexto_pwd.hash(contrasenia)
 
-def crear_token_temporal(id_usuario: int) -> str:
-    expira = datetime.utcnow() + timedelta(minutes=5)
-    payload = {
-        "id_usuario": id_usuario,
-        "tipo": "temporal",
-        "jti": str(uuid.uuid4()),
-        "exp": expira
-    }
-    return jwt.encode(payload, configuracion.secret_key, algorithm=configuracion.algorithm)
-
-def crear_token_acceso(id_usuario: int, id_tenant: int, roles: list[str]) -> str:
+def crear_token_acceso(id_usuario: int, tenants: list[dict]) -> str:
     expira = datetime.utcnow() + timedelta(minutes=configuracion.access_token_expire_minutes)
     payload = {
         "id_usuario": id_usuario,
-        "id_tenant": id_tenant,
-        "roles": roles,
+        "tenants": tenants,
         "tipo": "acceso",
         "jti": str(uuid.uuid4()),
         "exp": expira
     }
     return jwt.encode(payload, configuracion.secret_key, algorithm=configuracion.algorithm)
 
-def crear_token_refresco(id_usuario: int, id_tenant: int) -> str:
+def crear_token_refresco(id_usuario: int) -> str:
     expira = datetime.utcnow() + timedelta(days=7)
     payload = {
         "id_usuario": id_usuario,
-        "id_tenant": id_tenant,
         "tipo": "refresco",
         "jti": str(uuid.uuid4()),
         "exp": expira
