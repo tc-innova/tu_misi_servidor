@@ -316,10 +316,13 @@ class ServicioUsuario:
     
     async def listar_todos(self, skip: int = 0, limit: int = 100):
         query = text("""
-            SELECT id_usuario, nombres, apellido_paterno, apellido_materno,
-                   fecha_nacimiento, sexo, ci, usuario, activo
-            FROM usuarios
-            ORDER BY id_usuario
+            SELECT DISTINCT u.id_usuario, u.nombres, u.apellido_paterno, u.apellido_materno,
+                   u.fecha_nacimiento, u.sexo, u.ci, u.usuario, u.activo
+            FROM usuarios u
+            INNER JOIN usuarios_roles ur ON u.id_usuario = ur.id_usuario
+            INNER JOIN roles r ON ur.id_rol = r.id_rol
+            WHERE r.nombre = 'cliente'
+            ORDER BY u.id_usuario
             OFFSET :skip LIMIT :limit
         """)
         resultado = await self.db.execute(query, {
