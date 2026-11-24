@@ -1,7 +1,7 @@
 from functools import wraps
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.nucleo.autenticacion import obtener_usuario_actual, obtener_roles_usuario
+from app.nucleo.autenticacion import obtener_usuario_actual
 from app.nucleo.base_datos import obtener_db
 
 def requiere_roles(*roles_permitidos: str):
