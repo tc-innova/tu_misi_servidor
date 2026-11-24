@@ -89,14 +89,3 @@ async def obtener_usuario_temporal(
     
     return {"id_usuario": id_usuario}
 
-async def obtener_roles_usuario(id_usuario: int, id_tenant: int, db: AsyncSession) -> list[str]:
-    query = text("""
-        SELECT r.nombre
-        FROM roles r
-        INNER JOIN usuarios_roles ur ON r.id_rol = ur.id_rol
-        WHERE ur.id_usuario = :id_usuario AND ur.id_tenant = :id_tenant
-    """)
-    
-    resultado = await db.execute(query, {"id_usuario": id_usuario, "id_tenant": id_tenant})
-    return [row["nombre"] for row in resultado.mappings().all()]
-

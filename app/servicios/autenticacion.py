@@ -1,8 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from app.nucleo.seguridad import verificar_contrasenia, crear_token_temporal, crear_token_acceso, crear_token_refresco
+from app.nucleo.seguridad import verificar_contrasenia, crear_token_acceso, crear_token_refresco
 from app.nucleo.excepciones import ExcepcionNoAutorizado
-from app.nucleo.autenticacion import obtener_roles_usuario
 
 class ServicioAutenticacion:
     def __init__(self, db: AsyncSession):
