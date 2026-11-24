@@ -34,6 +34,53 @@ class ServicioAutenticacion:
             "tipo_token": "temporal"
         }
     
+    async def login_admin(self, usuario: str, contrasenia: str) -> dict:
+        query = text("""
+            SELECT u.id_usuario, u.contrasenia, u.activo
+            FROM usuarios u
+            WHERE u.usuario = :usuario
+        """)
+        
+        resultado = await self.db.execute(query, {"usuario": usuario})
+        usuario_bd = resultado.mappings().first()
+        
+        if not usuario_bd:
+            raise ExcepcionNoAutorizado("Credenciales inválidas")
+        
+        if not usuario_bd["activo"]:
+            raise ExcepcionNoAutorizado("Usuario inactivo")
+        
+        if not verificar_contrasenia(contrasenia, usuario_bd["contrasenia"]):
+            raise ExcepcionNoAutorizado("Credenciales inválidas")
+        
+        query_admin = text("""
+            SELECT ur.id_tenant, r.nombre
+            FROM usuarios_roles ur
+            INNER JOIN roles r ON ur.id_rol = r.id_rol
+            WHERE ur.id_usuario = :id_usuario AND r.nombre = 'administrador'
+            LIMIT 1
+        """)
+        
+        resultado_rol = await self.db.execute(query_admin, {"id_usuario": usuario_bd["id_usuario"]})
+        admin_rol = resultado_rol.mappings().first()
+        
+        if not admin_rol:
+            raise ExcepcionNoAutorizado("No tienes permisos de administrador")
+        
+        id_tenant = admin_rol["id_tenant"]
+        roles = ["administrador"]
+        
+        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], id_tenant, roles)
+        token_refresco = crear_token_refresco(usuario_bd["id_usuario"], id_tenant)
+        
+        return {
+            "token_acceso": token_acceso,
+            "token_refresco": token_refresco,
+            "tipo_token": "acceso",
+            "id_tenant": id_tenant,
+            "roles": roles
+        }
+    
     async def listar_tenants_usuario(self, id_usuario: int) -> list[dict]:
         query = text("""
             SELECT t.id_tenant, t.nombre, ut.activo

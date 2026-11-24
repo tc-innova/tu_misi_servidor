@@ -16,8 +16,19 @@ from app.servicios.autenticacion import ServicioAutenticacion
 
 router = APIRouter()
 
-@router.post("/login", response_model=TokenTemporal)
-async def login(
+@router.post("/login/admin", response_model=TokenAcceso)
+async def login_admin(
+    credenciales: LoginCredenciales,
+    db: AsyncSession = Depends(obtener_db)
+):
+    servicio = ServicioAutenticacion(db)
+    return await servicio.login_admin(
+        credenciales.usuario,
+        credenciales.contrasenia
+    )
+
+@router.post("/login/cliente", response_model=TokenTemporal)
+async def login_cliente(
     credenciales: LoginCredenciales,
     db: AsyncSession = Depends(obtener_db)
 ):
