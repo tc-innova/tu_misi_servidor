@@ -27,27 +27,27 @@ class ServicioAutenticacion:
         if not verificar_contrasenia(contrasenia, usuario_bd["contrasenia"]):
             raise ExcepcionNoAutorizado("Credenciales inválidas")
         
-        tenants = await self.obtener_tenants_con_roles(usuario_bd["id_usuario"])
+        query_admin = text("""
+            SELECT 1
+            FROM usuarios_roles ur
+            INNER JOIN roles r ON ur.id_rol = r.id_rol
+            WHERE ur.id_usuario = :id_usuario AND r.nombre = 'administrador'
+            LIMIT 1
+        """)
         
-        if not tenants:
-            raise ExcepcionNoAutorizado("No tienes acceso a ningún negocio")
+        resultado_admin = await self.db.execute(query_admin, {"id_usuario": usuario_bd["id_usuario"]})
+        es_admin = resultado_admin.scalar()
         
-        tiene_rol_admin = any(
-            "administrador" in tenant.get("roles", []) 
-            for tenant in tenants
-        )
-        
-        if not tiene_rol_admin:
+        if not es_admin:
             raise ExcepcionNoAutorizado("No tienes permisos de administrador")
         
-        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants)
+        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], [{"roles": ["administrador"]}])
         token_refresco = crear_token_refresco(usuario_bd["id_usuario"])
         
         return {
             "token_acceso": token_acceso,
             "token_refresco": token_refresco,
-            "tipo_token": "acceso",
-            "tenants": tenants
+            "tipo_token": "acceso"
         }
     
     async def login_cliente(self, usuario: str, contrasenia: str) -> dict:
