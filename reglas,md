@@ -1,0 +1,40 @@
+- Nombres de variables, clases, métodos, módulos y paquetes en español (excepto los impuestos por el lenguaje o las librerías)
+- Código modular y reutilizable, una responsabilidad por módulo
+- Cada módulo idealmente bajo 200 líneas; si lo supera, dividir por responsabilidad
+- Sin comentarios que describan qué hace el código; solo comentarios de "por qué" cuando no sea evidente
+- No crear archivos que no se hayan pedido
+- Modificar solo lo necesario
+- Ante ambigüedad, preguntar antes de asumir
+- No compilar ni ejecutar el código automáticamente para verificación
+- Nada hardcodeado: usar variables de entorno o configuración
+- Gestión de errores apropiada en todos los servicios
+- Base de datos PostgreSQL async con pools de conexiones
+- Operaciones asíncronas (async/await) en toda la aplicación
+- SQL raw con parámetros nombrados para prevenir SQL injection
+- No usar ORM para queries, solo modelos para mapeo de resultados
+- No generar archivos .md (README, documentación, etc.) sin que se solicite explícitamente
+- No ejecutar cambios hasta obtener confirmación del usuario
+- Respuestas concisas y directas, sin texto innecesario
+- No usar else, preferir early returns y guard clauses
+- Usar decoradores para manejo centralizado de errores y lógica transversal
+- Configurar modo desarrollo/producción mediante variables de entorno
+- Documentación Swagger/OpenAPI solo disponible en modo desarrollo
+
+## Arquitectura Multi-Tenant
+- Sistema multi-tenant donde cada tenant representa un negocio independiente
+- Usuarios pueden pertenecer a múltiples tenants (tabla usuarios_tenants)
+- Roles asignados por tenant (tabla usuarios_roles con id_tenant)
+- Clientes ven solo datos de su tenant (aislamiento por tenant)
+- Administrador es SUPER-ADMIN: gestiona usuarios de todos los tenants
+- Administrador NO puede asignar ni gestionar rol "administrador" (solo roles operativos: cliente, vendedor, cajero, etc.)
+- Productos y tipos_productos incluyen id_tenant para aislamiento directo
+
+## Gestión de Roles
+- Admin puede asignar cualquier rol EXCEPTO "administrador"
+- Roles operativos permitidos: cliente, vendedor, cajero, gerente, etc.
+- Sistema extensible para agregar nuevos roles sin modificar código
+
+## Flujo de Creación de Usuario por Admin
+1. Admin crea usuario → Crea tenant (negocio) + usuario + relación usuarios_tenants + rol asignado
+2. Usuario puede hacer login inmediatamente con su negocio
+3. Usuario puede crear más negocios o ser invitado a otros tenants posteriormente

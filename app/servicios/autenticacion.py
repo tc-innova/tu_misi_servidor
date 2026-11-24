@@ -9,7 +9,7 @@ class ServicioAutenticacion:
     
     async def login_admin(self, usuario: str, contrasenia: str) -> dict:
         query = text("""
-            SELECT id_usuario, contrasenia, activo
+            SELECT id_usuario, contrasenia, activo, nombre
             FROM usuarios
             WHERE usuario = :usuario
         """)
@@ -42,18 +42,16 @@ class ServicioAutenticacion:
         
         tenants_info = [{"roles": ["administrador"]}]
         token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants_info)
-        token_refresco = crear_token_refresco(usuario_bd["id_usuario"])
         
         return {
             "token_acceso": token_acceso,
-            "token_refresco": token_refresco,
             "tipo_token": "acceso",
-            "tenants": tenants_info
+            "nombre": usuario_bd["nombre"]
         }
     
     async def login_cliente(self, usuario: str, contrasenia: str) -> dict:
         query = text("""
-            SELECT id_usuario, contrasenia, activo
+            SELECT id_usuario, contrasenia, activo, nombre
             FROM usuarios
             WHERE usuario = :usuario
         """)
@@ -84,13 +82,11 @@ class ServicioAutenticacion:
             raise ExcepcionNoAutorizado("Esta ruta es solo para clientes")
         
         token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants)
-        token_refresco = crear_token_refresco(usuario_bd["id_usuario"])
         
         return {
             "token_acceso": token_acceso,
-            "token_refresco": token_refresco,
             "tipo_token": "acceso",
-            "tenants": tenants
+            "nombre": usuario_bd["nombre"]
         }
     
     async def obtener_tenants_con_roles(self, id_usuario: int) -> list[dict]:
@@ -123,7 +119,7 @@ class ServicioAutenticacion:
     
     async def refrescar_token(self, id_usuario: int) -> dict:
         query_verificar = text("""
-            SELECT activo
+            SELECT activo, nombre
             FROM usuarios
             WHERE id_usuario = :id_usuario
         """)
@@ -144,5 +140,5 @@ class ServicioAutenticacion:
         return {
             "token_acceso": token_acceso,
             "tipo_token": "acceso",
-            "tenants": tenants
+            "nombre": usuario["nombre"]
         }
