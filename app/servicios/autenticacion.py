@@ -40,13 +40,15 @@ class ServicioAutenticacion:
         if not es_admin:
             raise ExcepcionNoAutorizado("No tienes permisos de administrador")
         
-        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], [{"roles": ["administrador"]}])
+        tenants_info = [{"roles": ["administrador"]}]
+        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants_info)
         token_refresco = crear_token_refresco(usuario_bd["id_usuario"])
         
         return {
             "token_acceso": token_acceso,
             "token_refresco": token_refresco,
-            "tipo_token": "acceso"
+            "tipo_token": "acceso",
+            "tenants": tenants_info
         }
     
     async def login_cliente(self, usuario: str, contrasenia: str) -> dict:
