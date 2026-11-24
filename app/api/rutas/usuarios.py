@@ -39,14 +39,15 @@ async def crear_usuario(
     usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
-    return await servicio.crear(usuario)
+    id_tenant = usuario_actual.get("id_tenant")
+    return await servicio.crear(usuario, id_tenant)
 
 @router.post("/{id_usuario}/celulares", response_model=CelularRespuesta, status_code=201)
 async def agregar_celular_usuario(
     id_usuario: int,
     celular: CelularBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_celular(id_usuario, celular)
@@ -56,7 +57,7 @@ async def agregar_correo_usuario(
     id_usuario: int,
     correo: CorreoBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_correo(id_usuario, correo)
@@ -65,7 +66,7 @@ async def agregar_correo_usuario(
 async def listar_celulares_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_celulares(id_usuario)
@@ -74,7 +75,7 @@ async def listar_celulares_usuario(
 async def listar_correos_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_correos(id_usuario)
@@ -83,7 +84,7 @@ async def listar_correos_usuario(
 async def eliminar_celular_usuario(
     id_celular: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_celular(id_celular)
@@ -92,27 +93,26 @@ async def eliminar_celular_usuario(
 async def eliminar_correo_usuario(
     id_correo: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_correo(id_correo)
 
 @router.get("/", response_model=List[UsuarioRespuesta])
 async def listar_usuarios(
-    id_tenant: int,
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador"))
+    usuario_actual = Depends(requiere_roles("administrador"))
 ):
     servicio = ServicioUsuario(db)
-    return await servicio.listar_por_tenant(id_tenant, skip, limit)
+    return await servicio.listar_todos(skip, limit)
 
 @router.get("/{id_usuario}", response_model=UsuarioRespuesta)
 async def obtener_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario = Depends(requiere_roles("administrador", "cliente"))
+    usuario_actual = Depends(requiere_roles("administrador", "cliente"))
 ):
     servicio = ServicioUsuario(db)
     return await servicio.obtener_por_id(id_usuario)

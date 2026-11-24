@@ -11,19 +11,18 @@ class ServicioUsuario:
     
     @manejar_integridad("Usuario", "CI o usuario")
     @auditar("usuarios", "crear")
-    async def crear(self, usuario, id_rol: int = None):
+    async def crear(self, usuario, id_tenant: int, id_rol: int = None):
         contrasenia_hash = obtener_hash_contrasenia(usuario.contrasenia)
         
         query_usuario = text("""
-            INSERT INTO usuarios (id_tenant, nombres, apellido_paterno, apellido_materno, 
+            INSERT INTO usuarios (nombres, apellido_paterno, apellido_materno, 
                                  fecha_nacimiento, sexo, ci, usuario, contrasenia, activo)
-            VALUES (:id_tenant, :nombres, :apellido_paterno, :apellido_materno,
+            VALUES (:nombres, :apellido_paterno, :apellido_materno,
                     :fecha_nacimiento, :sexo, :ci, :usuario, :contrasenia, :activo)
             RETURNING id_usuario
         """)
         
         resultado = await self.db.execute(query_usuario, {
-            "id_tenant": usuario.id_tenant,
             "nombres": usuario.nombres,
             "apellido_paterno": usuario.apellido_paterno,
             "apellido_materno": usuario.apellido_materno,
@@ -36,13 +35,24 @@ class ServicioUsuario:
         })
         id_usuario = resultado.scalar()
         
+        query_relacion = text("""
+            INSERT INTO usuarios_tenants (id_usuario, id_tenant, activo)
+            VALUES (:id_usuario, :id_tenant, :activo)
+        """)
+        await self.db.execute(query_relacion, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "activo": True
+        })
+        
         if id_rol:
             query_rol = text("""
-                INSERT INTO usuarios_roles (id_usuario, id_rol)
-                VALUES (:id_usuario, :id_rol)
+                INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
+                VALUES (:id_usuario, :id_tenant, :id_rol)
             """)
             await self.db.execute(query_rol, {
                 "id_usuario": id_usuario,
+                "id_tenant": id_tenant,
                 "id_rol": id_rol
             })
         
@@ -106,7 +116,6 @@ class ServicioUsuario:
         
         return {
             "id_usuario": id_usuario,
-            "id_tenant": id_tenant,
             "nombres": usuario_data.nombres,
             "apellido_paterno": usuario_data.apellido_paterno,
             "apellido_materno": usuario_data.apellido_materno,
@@ -174,7 +183,6 @@ class ServicioUsuario:
         
         return {
             "id_usuario": id_usuario,
-            "id_tenant": id_tenant,
             "nombres": usuario_data.nombres,
             "apellido_paterno": usuario_data.apellido_paterno,
             "apellido_materno": usuario_data.apellido_materno,
@@ -268,7 +276,7 @@ class ServicioUsuario:
     
     async def obtener_por_id(self, id_usuario: int):
         query = text("""
-            SELECT id_usuario, id_tenant, nombres, apellido_paterno, apellido_materno,
+            SELECT id_usuario, nombres, apellido_paterno, apellido_materno,
                    fecha_nacimiento, sexo, ci, usuario, activo
             FROM usuarios
             WHERE id_usuario = :id_usuario
@@ -281,7 +289,7 @@ class ServicioUsuario:
     
     async def obtener_por_nombre_usuario(self, nombre_usuario: str):
         query = text("""
-            SELECT id_usuario, id_tenant, nombres, apellido_paterno, apellido_materno,
+            SELECT id_usuario, nombres, apellido_paterno, apellido_materno,
                    fecha_nacimiento, sexo, ci, usuario, contrasenia, activo
             FROM usuarios
             WHERE usuario = :usuario
@@ -291,15 +299,30 @@ class ServicioUsuario:
     
     async def listar_por_tenant(self, id_tenant: int, skip: int = 0, limit: int = 100):
         query = text("""
-            SELECT id_usuario, id_tenant, nombres, apellido_paterno, apellido_materno,
-                   fecha_nacimiento, sexo, ci, usuario, activo
-            FROM usuarios
-            WHERE id_tenant = :id_tenant
-            ORDER BY id_usuario
+            SELECT DISTINCT u.id_usuario, u.nombres, u.apellido_paterno, u.apellido_materno,
+                   u.fecha_nacimiento, u.sexo, u.ci, u.usuario, u.activo
+            FROM usuarios u
+            INNER JOIN usuarios_tenants ut ON u.id_usuario = ut.id_usuario
+            WHERE ut.id_tenant = :id_tenant AND ut.activo = TRUE
+            ORDER BY u.id_usuario
             OFFSET :skip LIMIT :limit
         """)
         resultado = await self.db.execute(query, {
             "id_tenant": id_tenant,
+            "skip": skip,
+            "limit": limit
+        })
+        return resultado.mappings().all()
+    
+    async def listar_todos(self, skip: int = 0, limit: int = 100):
+        query = text("""
+            SELECT id_usuario, nombres, apellido_paterno, apellido_materno,
+                   fecha_nacimiento, sexo, ci, usuario, activo
+            FROM usuarios
+            ORDER BY id_usuario
+            OFFSET :skip LIMIT :limit
+        """)
+        resultado = await self.db.execute(query, {
             "skip": skip,
             "limit": limit
         })

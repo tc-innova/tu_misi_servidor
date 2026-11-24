@@ -43,7 +43,6 @@ class UsuarioBase(BaseModel):
     activo: bool = True
 
 class UsuarioCrear(UsuarioBase):
-    id_tenant: int
     contrasenia: str
 
 class UsuarioClientePruebaCrear(BaseModel):
@@ -60,7 +59,6 @@ class UsuarioClientePruebaCrear(BaseModel):
 
 class UsuarioRespuesta(UsuarioBase):
     id_usuario: int
-    id_tenant: int
     
     class Config:
         from_attributes = True
