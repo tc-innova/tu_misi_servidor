@@ -24,15 +24,16 @@
 - Sistema multi-tenant donde cada tenant representa un negocio independiente
 - Usuarios pueden pertenecer a múltiples tenants (tabla usuarios_tenants)
 - Roles asignados por tenant (tabla usuarios_roles con id_tenant)
-- Clientes ven solo datos de su tenant (aislamiento por tenant)
-- Administrador es SUPER-ADMIN: gestiona usuarios de todos los tenants
-- Administrador NO puede asignar ni gestionar rol "administrador" (solo roles operativos: cliente, vendedor, cajero, etc.)
+- Usuarios ven solo datos de su tenant (aislamiento por tenant)
+- Administrador es SUPER-ADMIN: gestiona usuarios de todos los tenants desde tabla administradores
+- Administrador NO puede asignar ni gestionar rol "administrador" (solo roles operativos: propietario, vendedor, cajero, etc.)
 - Productos y tipos_productos incluyen id_tenant para aislamiento directo
 
 ## Gestión de Roles
 - Admin puede asignar cualquier rol EXCEPTO "administrador"
-- Roles operativos permitidos: cliente, vendedor, cajero, gerente, etc.
+- Roles operativos permitidos: propietario, vendedor, cajero, gerente, etc.
 - Sistema extensible para agregar nuevos roles sin modificar código
+- Tabla clientes es independiente y representa los compradores de productos del negocio
 
 ## Flujo de Creación de Usuario por Admin
 1. Admin crea usuario → Crea tenant (negocio) + usuario + relación usuarios_tenants + rol asignado

@@ -327,7 +327,7 @@ CREATE INDEX idx_proveedores_nombre_trgm ON proveedores USING GIN (nombre gin_tr
 CREATE INDEX idx_proveedores_apellido_paterno_trgm ON proveedores USING GIN (apellido_paterno gin_trgm_ops);
 CREATE INDEX idx_proveedores_apellido_materno_trgm ON proveedores USING GIN (apellido_materno gin_trgm_ops);
 
-INSERT INTO roles (nombre) VALUES ('administrador'), ('cliente');
+INSERT INTO roles (nombre) VALUES ('propietario');
 
 INSERT INTO estados_venta (nombre) VALUES ('activa'), ('anulada');
 

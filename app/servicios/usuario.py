@@ -131,7 +131,7 @@ class ServicioUsuario:
         return await self.obtener_por_id(id_usuario)
     
     async def crear_con_tenant(self, usuario_data, nombre_negocio: str):
-        return await self._crear_usuario_con_tenant(usuario_data, nombre_negocio, "cliente")
+        return await self._crear_usuario_con_tenant(usuario_data, nombre_negocio, "propietario")
     
     async def crear_admin_con_tenant(self, usuario_data, nombre_negocio: str):
         contrasenia_hash = obtener_hash_contrasenia(usuario_data.contrasenia)
@@ -366,7 +366,7 @@ class ServicioUsuario:
             FROM usuarios u
             INNER JOIN usuarios_roles ur ON u.id_usuario = ur.id_usuario
             INNER JOIN roles r ON ur.id_rol = r.id_rol
-            WHERE r.nombre = 'cliente'
+            WHERE r.nombre = 'propietario'
             ORDER BY u.id_usuario
             OFFSET :skip LIMIT :limit
         """)
