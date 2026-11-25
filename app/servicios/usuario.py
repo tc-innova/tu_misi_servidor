@@ -249,7 +249,7 @@ class ServicioUsuario:
         query = text("""
             INSERT INTO celulares_usuarios (id_usuario, codigo_pais, numero)
             VALUES (:id_usuario, :codigo_pais, :numero)
-            RETURNING id_celular, id_usuario, codigo_pais, numero
+            RETURNING id_usuario, codigo_pais, numero
         """)
         resultado = await self.db.execute(query, {
             "id_usuario": id_usuario,
@@ -270,7 +270,7 @@ class ServicioUsuario:
         query = text("""
             INSERT INTO correos_usuarios (id_usuario, correo)
             VALUES (:id_usuario, :correo)
-            RETURNING id_correo, id_usuario, correo
+            RETURNING id_usuario, correo
         """)
         resultado = await self.db.execute(query, {
             "id_usuario": id_usuario,
@@ -279,23 +279,38 @@ class ServicioUsuario:
         await self.db.commit()
         return resultado.mappings().first()
     
-    async def eliminar_celular(self, id_celular: int):
-        query = text("DELETE FROM celulares_usuarios WHERE id_celular = :id_celular RETURNING id_celular")
-        resultado = await self.db.execute(query, {"id_celular": id_celular})
+    async def eliminar_celular(self, id_usuario: int, codigo_pais: str, numero: str):
+        query = text("""
+            DELETE FROM celulares_usuarios 
+            WHERE id_usuario = :id_usuario AND codigo_pais = :codigo_pais AND numero = :numero
+            RETURNING id_usuario
+        """)
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "codigo_pais": codigo_pais,
+            "numero": numero
+        })
         if not resultado.first():
             raise ExcepcionNoEncontrado("Celular")
         await self.db.commit()
     
-    async def eliminar_correo(self, id_correo: int):
-        query = text("DELETE FROM correos_usuarios WHERE id_correo = :id_correo RETURNING id_correo")
-        resultado = await self.db.execute(query, {"id_correo": id_correo})
+    async def eliminar_correo(self, id_usuario: int, correo: str):
+        query = text("""
+            DELETE FROM correos_usuarios 
+            WHERE id_usuario = :id_usuario AND correo = :correo
+            RETURNING id_usuario
+        """)
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "correo": correo
+        })
         if not resultado.first():
             raise ExcepcionNoEncontrado("Correo")
         await self.db.commit()
     
     async def listar_celulares(self, id_usuario: int):
         query = text("""
-            SELECT id_celular, id_usuario, codigo_pais, numero
+            SELECT id_usuario, codigo_pais, numero
             FROM celulares_usuarios
             WHERE id_usuario = :id_usuario
         """)
@@ -304,7 +319,7 @@ class ServicioUsuario:
     
     async def listar_correos(self, id_usuario: int):
         query = text("""
-            SELECT id_correo, id_usuario, correo
+            SELECT id_usuario, correo
             FROM correos_usuarios
             WHERE id_usuario = :id_usuario
         """)

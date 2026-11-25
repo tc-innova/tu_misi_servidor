@@ -107,30 +107,33 @@ async def listar_correos_usuario(
     return await servicio.listar_correos(id_usuario)
 
 @router.delete(
-    "/celulares/{id_celular}",
+    "/celulares",
     status_code=204,
     responses=RESPUESTAS_ELIMINAR
 )
 async def eliminar_celular_usuario(
-    id_celular: int,
+    id_usuario: int,
+    codigo_pais: str,
+    numero: str,
     db: AsyncSession = Depends(obtener_db),
     admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
-    await servicio.eliminar_celular(id_celular)
+    await servicio.eliminar_celular(id_usuario, codigo_pais, numero)
 
 @router.delete(
-    "/correos/{id_correo}",
+    "/correos",
     status_code=204,
     responses=RESPUESTAS_ELIMINAR
 )
 async def eliminar_correo_usuario(
-    id_correo: int,
+    id_usuario: int,
+    correo: str,
     db: AsyncSession = Depends(obtener_db),
     admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
-    await servicio.eliminar_correo(id_correo)
+    await servicio.eliminar_correo(id_usuario, correo)
 
 @router.get(
     "/",
