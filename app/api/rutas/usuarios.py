@@ -4,6 +4,15 @@ from typing import List
 from app.nucleo.base_datos import obtener_db
 from app.nucleo.permisos import requiere_roles
 from app.nucleo.limitador import limiter
+from app.nucleo.respuestas import (
+    RESPUESTAS_CREAR_PUBLICO,
+    RESPUESTAS_CREAR,
+    RESPUESTAS_LISTAR,
+    RESPUESTAS_OBTENER,
+    RESPUESTAS_ACTUALIZAR,
+    RESPUESTAS_ELIMINAR,
+    RESPUESTAS_ASIGNAR
+)
 from app.esquemas.usuario import (
     UsuarioCrear, UsuarioRespuesta, UsuarioClientePruebaCrear,
     CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta, RolRespuesta
@@ -12,17 +21,12 @@ from app.servicios.usuario import ServicioUsuario
 
 router = APIRouter()
 
-@router.post("/cliente-prueba", response_model=UsuarioRespuesta, status_code=201)
-@limiter.limit("3/minute")
-async def crear_usuario_cliente_prueba(
-    request: Request,
-    usuario: UsuarioClientePruebaCrear,
-    db: AsyncSession = Depends(obtener_db)
-):
-    servicio = ServicioUsuario(db)
-    return await servicio.crear_con_tenant(usuario, usuario.nombre_negocio)
-
-@router.post("/admin-prueba", response_model=UsuarioRespuesta, status_code=201)
+@router.post(
+    "/admin-prueba",
+    response_model=UsuarioRespuesta,
+    status_code=201,
+    responses=RESPUESTAS_CREAR_PUBLICO
+)
 @limiter.limit("3/minute")
 async def crear_usuario_admin_prueba(
     request: Request,
@@ -32,7 +36,12 @@ async def crear_usuario_admin_prueba(
     servicio = ServicioUsuario(db)
     return await servicio.crear_admin_con_tenant(usuario, usuario.nombre_negocio)
 
-@router.post("/", response_model=UsuarioRespuesta, status_code=201)
+@router.post(
+    "/",
+    response_model=UsuarioRespuesta,
+    status_code=201,
+    responses=RESPUESTAS_ASIGNAR
+)
 async def crear_usuario(
     usuario: UsuarioCrear,
     db: AsyncSession = Depends(obtener_db),
@@ -41,7 +50,12 @@ async def crear_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.crear(usuario)
 
-@router.post("/{id_usuario}/celulares", response_model=CelularRespuesta, status_code=201)
+@router.post(
+    "/{id_usuario}/celulares",
+    response_model=CelularRespuesta,
+    status_code=201,
+    responses=RESPUESTAS_CREAR
+)
 async def agregar_celular_usuario(
     id_usuario: int,
     celular: CelularBase,
@@ -51,7 +65,12 @@ async def agregar_celular_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.agregar_celular(id_usuario, celular)
 
-@router.post("/{id_usuario}/correos", response_model=CorreoRespuesta, status_code=201)
+@router.post(
+    "/{id_usuario}/correos",
+    response_model=CorreoRespuesta,
+    status_code=201,
+    responses=RESPUESTAS_CREAR
+)
 async def agregar_correo_usuario(
     id_usuario: int,
     correo: CorreoBase,
@@ -61,7 +80,11 @@ async def agregar_correo_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.agregar_correo(id_usuario, correo)
 
-@router.get("/{id_usuario}/celulares", response_model=List[CelularRespuesta])
+@router.get(
+    "/{id_usuario}/celulares",
+    response_model=List[CelularRespuesta],
+    responses=RESPUESTAS_LISTAR
+)
 async def listar_celulares_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
@@ -70,7 +93,11 @@ async def listar_celulares_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.listar_celulares(id_usuario)
 
-@router.get("/{id_usuario}/correos", response_model=List[CorreoRespuesta])
+@router.get(
+    "/{id_usuario}/correos",
+    response_model=List[CorreoRespuesta],
+    responses=RESPUESTAS_LISTAR
+)
 async def listar_correos_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
@@ -79,7 +106,11 @@ async def listar_correos_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.listar_correos(id_usuario)
 
-@router.delete("/celulares/{id_celular}", status_code=204)
+@router.delete(
+    "/celulares/{id_celular}",
+    status_code=204,
+    responses=RESPUESTAS_ELIMINAR
+)
 async def eliminar_celular_usuario(
     id_celular: int,
     db: AsyncSession = Depends(obtener_db),
@@ -88,7 +119,11 @@ async def eliminar_celular_usuario(
     servicio = ServicioUsuario(db)
     await servicio.eliminar_celular(id_celular)
 
-@router.delete("/correos/{id_correo}", status_code=204)
+@router.delete(
+    "/correos/{id_correo}",
+    status_code=204,
+    responses=RESPUESTAS_ELIMINAR
+)
 async def eliminar_correo_usuario(
     id_correo: int,
     db: AsyncSession = Depends(obtener_db),
@@ -97,7 +132,11 @@ async def eliminar_correo_usuario(
     servicio = ServicioUsuario(db)
     await servicio.eliminar_correo(id_correo)
 
-@router.get("/", response_model=List[UsuarioRespuesta])
+@router.get(
+    "/",
+    response_model=List[UsuarioRespuesta],
+    responses=RESPUESTAS_LISTAR
+)
 async def listar_usuarios(
     skip: int = 0,
     limit: int = 100,
@@ -107,7 +146,11 @@ async def listar_usuarios(
     servicio = ServicioUsuario(db)
     return await servicio.listar_todos(skip, limit)
 
-@router.get("/{id_usuario}", response_model=UsuarioRespuesta)
+@router.get(
+    "/{id_usuario}",
+    response_model=UsuarioRespuesta,
+    responses=RESPUESTAS_OBTENER
+)
 async def obtener_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
@@ -116,7 +159,11 @@ async def obtener_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.obtener_por_id(id_usuario)
 
-@router.put("/{id_usuario}", response_model=UsuarioRespuesta)
+@router.put(
+    "/{id_usuario}",
+    response_model=UsuarioRespuesta,
+    responses=RESPUESTAS_ACTUALIZAR
+)
 async def actualizar_usuario(
     id_usuario: int,
     datos: dict,
@@ -126,7 +173,11 @@ async def actualizar_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.actualizar(id_usuario, datos)
 
-@router.get("/roles/disponibles", response_model=List[RolRespuesta])
+@router.get(
+    "/roles/disponibles",
+    response_model=List[RolRespuesta],
+    responses=RESPUESTAS_LISTAR
+)
 async def listar_roles_disponibles(
     db: AsyncSession = Depends(obtener_db),
     usuario_actual = Depends(requiere_roles("administrador"))
@@ -134,7 +185,11 @@ async def listar_roles_disponibles(
     servicio = ServicioUsuario(db)
     return await servicio.listar_roles_disponibles()
 
-@router.post("/{id_usuario}/roles", status_code=201)
+@router.post(
+    "/{id_usuario}/roles",
+    status_code=201,
+    responses=RESPUESTAS_ASIGNAR
+)
 async def asignar_rol_usuario(
     id_usuario: int,
     id_tenant: int,
@@ -145,7 +200,11 @@ async def asignar_rol_usuario(
     servicio = ServicioUsuario(db)
     return await servicio.asignar_rol(id_usuario, id_tenant, id_rol)
 
-@router.delete("/{id_usuario}/roles/{id_rol}", status_code=204)
+@router.delete(
+    "/{id_usuario}/roles/{id_rol}",
+    status_code=204,
+    responses=RESPUESTAS_ELIMINAR
+)
 async def remover_rol_usuario(
     id_usuario: int,
     id_rol: int,

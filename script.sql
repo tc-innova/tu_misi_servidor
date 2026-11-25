@@ -101,6 +101,22 @@ CREATE TABLE roles (
     CONSTRAINT uq_roles_nombre UNIQUE (nombre)
 );
 
+CREATE TABLE administradores (
+    id_administrador BIGINT GENERATED ALWAYS AS IDENTITY,
+    nombres VARCHAR(100) NOT NULL,
+    apellido_paterno VARCHAR(100) NOT NULL,
+    apellido_materno VARCHAR(100),
+    fecha_nacimiento DATE NOT NULL,
+    sexo BOOLEAN NOT NULL,
+    ci VARCHAR(20) NOT NULL,
+    usuario VARCHAR(50) NOT NULL,
+    contrasenia VARCHAR(255) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT pk_administradores PRIMARY KEY (id_administrador),
+    CONSTRAINT uq_administradores_ci UNIQUE (ci),
+    CONSTRAINT uq_administradores_usuario UNIQUE (usuario)
+);
+
 CREATE TABLE usuarios (
     id_usuario BIGINT GENERATED ALWAYS AS IDENTITY,
     nombres VARCHAR(100) NOT NULL,
@@ -293,6 +309,8 @@ CREATE INDEX idx_compras_usuario ON compras (id_usuario);
 CREATE INDEX idx_detalle_ventas_producto ON detalle_ventas (id_producto);
 CREATE INDEX idx_detalle_compras_producto ON detalle_compras (id_producto);
 CREATE INDEX idx_productos_tipo_producto ON productos (id_tipo_producto);
+CREATE INDEX idx_productos_tenant ON productos(id_tenant);
+CREATE INDEX idx_productos_activo ON productos(activo);
 CREATE INDEX idx_productos_tenant_activo ON productos(id_tenant, activo);
 CREATE INDEX idx_usuarios_roles_rol ON usuarios_roles (id_rol);
 CREATE INDEX idx_usuarios_tenants_tenant ON usuarios_tenants (id_tenant);

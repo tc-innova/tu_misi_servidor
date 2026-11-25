@@ -13,9 +13,7 @@ class TenantInfo(BaseModel):
 class TokenAcceso(BaseModel):
     token_acceso: str
     tipo_token: str
-    nombre: str
 
 class TokenRefrescado(BaseModel):
     token_acceso: str
     tipo_token: str
-    nombre: str

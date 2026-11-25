@@ -9,49 +9,34 @@ class ServicioAutenticacion:
     
     async def login_admin(self, usuario: str, contrasenia: str) -> dict:
         query = text("""
-            SELECT id_usuario, contrasenia, activo, nombre
-            FROM usuarios
+            SELECT id_administrador, contrasenia, activo
+            FROM administradores
             WHERE usuario = :usuario
         """)
         
         resultado = await self.db.execute(query, {"usuario": usuario})
-        usuario_bd = resultado.mappings().first()
+        admin_bd = resultado.mappings().first()
         
-        if not usuario_bd:
+        if not admin_bd:
             raise ExcepcionNoAutorizado("Credenciales inválidas")
         
-        if not usuario_bd["activo"]:
-            raise ExcepcionNoAutorizado("Usuario inactivo")
+        if not admin_bd["activo"]:
+            raise ExcepcionNoAutorizado("Administrador inactivo")
         
-        if not verificar_contrasenia(contrasenia, usuario_bd["contrasenia"]):
+        if not verificar_contrasenia(contrasenia, admin_bd["contrasenia"]):
             raise ExcepcionNoAutorizado("Credenciales inválidas")
-        
-        query_admin = text("""
-            SELECT 1
-            FROM usuarios_roles ur
-            INNER JOIN roles r ON ur.id_rol = r.id_rol
-            WHERE ur.id_usuario = :id_usuario AND r.nombre = 'administrador'
-            LIMIT 1
-        """)
-        
-        resultado_admin = await self.db.execute(query_admin, {"id_usuario": usuario_bd["id_usuario"]})
-        es_admin = resultado_admin.scalar()
-        
-        if not es_admin:
-            raise ExcepcionNoAutorizado("No tienes permisos de administrador")
         
         tenants_info = [{"roles": ["administrador"]}]
-        token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants_info)
+        token_acceso = crear_token_acceso(admin_bd["id_administrador"], tenants_info)
         
         return {
             "token_acceso": token_acceso,
-            "tipo_token": "acceso",
-            "nombre": usuario_bd["nombre"]
+            "tipo_token": "acceso"
         }
     
     async def login_cliente(self, usuario: str, contrasenia: str) -> dict:
         query = text("""
-            SELECT id_usuario, contrasenia, activo, nombre
+            SELECT id_usuario, contrasenia, activo
             FROM usuarios
             WHERE usuario = :usuario
         """)
@@ -85,8 +70,7 @@ class ServicioAutenticacion:
         
         return {
             "token_acceso": token_acceso,
-            "tipo_token": "acceso",
-            "nombre": usuario_bd["nombre"]
+            "tipo_token": "acceso"
         }
     
     async def obtener_tenants_con_roles(self, id_usuario: int) -> list[dict]:
@@ -119,7 +103,7 @@ class ServicioAutenticacion:
     
     async def refrescar_token(self, id_usuario: int) -> dict:
         query_verificar = text("""
-            SELECT activo, nombre
+            SELECT activo
             FROM usuarios
             WHERE id_usuario = :id_usuario
         """)
@@ -139,6 +123,5 @@ class ServicioAutenticacion:
         
         return {
             "token_acceso": token_acceso,
-            "tipo_token": "acceso",
-            "nombre": usuario["nombre"]
+            "tipo_token": "acceso"
         }

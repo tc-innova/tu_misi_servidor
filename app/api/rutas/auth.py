@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.nucleo.base_datos import obtener_db
 from app.nucleo.seguridad import verificar_token
+from app.nucleo.respuestas import RESPUESTAS_AUTH
 from app.esquemas.autenticacion import (
     LoginCredenciales,
     TokenAcceso,
@@ -11,7 +12,11 @@ from app.servicios.autenticacion import ServicioAutenticacion
 
 router = APIRouter()
 
-@router.post("/login/admin", response_model=TokenAcceso)
+@router.post(
+    "/login/admin",
+    response_model=TokenAcceso,
+    responses=RESPUESTAS_AUTH
+)
 async def login_admin(
     credenciales: LoginCredenciales,
     db: AsyncSession = Depends(obtener_db)
@@ -22,7 +27,11 @@ async def login_admin(
         credenciales.contrasenia
     )
 
-@router.post("/login/cliente", response_model=TokenAcceso)
+@router.post(
+    "/login/cliente",
+    response_model=TokenAcceso,
+    responses=RESPUESTAS_AUTH
+)
 async def login_cliente(
     credenciales: LoginCredenciales,
     db: AsyncSession = Depends(obtener_db)
@@ -33,7 +42,11 @@ async def login_cliente(
         credenciales.contrasenia
     )
 
-@router.post("/refresh", response_model=TokenRefrescado)
+@router.post(
+    "/refresh",
+    response_model=TokenRefrescado,
+    responses=RESPUESTAS_AUTH
+)
 async def refrescar_token(
     token_refresco: str,
     db: AsyncSession = Depends(obtener_db)
@@ -56,3 +69,4 @@ async def refrescar_token(
     
     servicio = ServicioAutenticacion(db)
     return await servicio.refrescar_token(id_usuario)
+
