@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.nucleo.base_datos import obtener_db
-from app.nucleo.permisos import requiere_roles
+from app.nucleo.autenticacion import obtener_administrador_actual
 from app.nucleo.limitador import limiter
 from app.nucleo.respuestas import (
     RESPUESTAS_CREAR_PUBLICO,
@@ -45,7 +45,7 @@ async def crear_usuario_admin_prueba(
 async def crear_usuario(
     usuario: UsuarioCrear,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.crear(usuario)
@@ -60,7 +60,7 @@ async def agregar_celular_usuario(
     id_usuario: int,
     celular: CelularBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_celular(id_usuario, celular)
@@ -75,7 +75,7 @@ async def agregar_correo_usuario(
     id_usuario: int,
     correo: CorreoBase,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.agregar_correo(id_usuario, correo)
@@ -88,7 +88,7 @@ async def agregar_correo_usuario(
 async def listar_celulares_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_celulares(id_usuario)
@@ -101,7 +101,7 @@ async def listar_celulares_usuario(
 async def listar_correos_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_correos(id_usuario)
@@ -114,7 +114,7 @@ async def listar_correos_usuario(
 async def eliminar_celular_usuario(
     id_celular: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_celular(id_celular)
@@ -127,7 +127,7 @@ async def eliminar_celular_usuario(
 async def eliminar_correo_usuario(
     id_correo: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     await servicio.eliminar_correo(id_correo)
@@ -141,7 +141,7 @@ async def listar_usuarios(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_todos(skip, limit)
@@ -154,7 +154,7 @@ async def listar_usuarios(
 async def obtener_usuario(
     id_usuario: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.obtener_por_id(id_usuario)
@@ -168,7 +168,7 @@ async def actualizar_usuario(
     id_usuario: int,
     datos: dict,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.actualizar(id_usuario, datos)
@@ -180,7 +180,7 @@ async def actualizar_usuario(
 )
 async def listar_roles_disponibles(
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.listar_roles_disponibles()
@@ -195,7 +195,7 @@ async def asignar_rol_usuario(
     id_tenant: int,
     id_rol: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     return await servicio.asignar_rol(id_usuario, id_tenant, id_rol)
@@ -209,7 +209,7 @@ async def remover_rol_usuario(
     id_usuario: int,
     id_rol: int,
     db: AsyncSession = Depends(obtener_db),
-    usuario_actual = Depends(requiere_roles("administrador"))
+    admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
     await servicio.remover_rol(id_usuario, id_rol)

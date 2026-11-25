@@ -26,8 +26,7 @@ class ServicioAutenticacion:
         if not verificar_contrasenia(contrasenia, admin_bd["contrasenia"]):
             raise ExcepcionNoAutorizado("Credenciales inválidas")
         
-        tenants_info = [{"roles": ["administrador"]}]
-        token_acceso = crear_token_acceso(admin_bd["id_administrador"], tenants_info)
+        token_acceso = crear_token_acceso(admin_bd["id_administrador"], es_admin=True)
         
         return {
             "token_acceso": token_acceso,

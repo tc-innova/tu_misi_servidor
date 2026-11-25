@@ -13,15 +13,26 @@ def verificar_contrasenia(contrasenia_plana: str, contrasenia_hash: str) -> bool
 def obtener_hash_contrasenia(contrasenia: str) -> str:
     return contexto_pwd.hash(contrasenia)
 
-def crear_token_acceso(id_usuario: int, tenants: list[dict]) -> str:
+def crear_token_acceso(id_usuario: int, tenants: list[dict] = None, es_admin: bool = False) -> str:
     expira = datetime.utcnow() + timedelta(minutes=configuracion.access_token_expire_minutes)
-    payload = {
-        "id_usuario": id_usuario,
-        "tenants": tenants,
-        "tipo": "acceso",
-        "jti": str(uuid.uuid4()),
-        "exp": expira
-    }
+    
+    if es_admin:
+        payload = {
+            "id_administrador": id_usuario,
+            "tipo": "acceso",
+            "es_admin": True,
+            "jti": str(uuid.uuid4()),
+            "exp": expira
+        }
+    else:
+        payload = {
+            "id_usuario": id_usuario,
+            "tenants": tenants,
+            "tipo": "acceso",
+            "jti": str(uuid.uuid4()),
+            "exp": expira
+        }
+    
     return jwt.encode(payload, configuracion.secret_key, algorithm=configuracion.algorithm)
 
 def crear_token_refresco(id_usuario: int) -> str:
