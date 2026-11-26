@@ -28,16 +28,16 @@ async def login_admin(
     )
 
 @router.post(
-    "/login/cliente",
+    "/login/usuario",
     response_model=TokenAcceso,
     responses=RESPUESTAS_AUTH
 )
-async def login_cliente(
+async def login_usuario(
     credenciales: LoginCredenciales,
     db: AsyncSession = Depends(obtener_db)
 ):
     servicio = ServicioAutenticacion(db)
-    return await servicio.login_cliente(
+    return await servicio.login_usuario(
         credenciales.usuario,
         credenciales.contrasenia
     )

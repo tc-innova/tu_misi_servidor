@@ -33,7 +33,7 @@ class ServicioAutenticacion:
             "tipo_token": "acceso"
         }
     
-    async def login_cliente(self, usuario: str, contrasenia: str) -> dict:
+    async def login_usuario(self, usuario: str, contrasenia: str) -> dict:
         query = text("""
             SELECT id_usuario, contrasenia, activo
             FROM usuarios
