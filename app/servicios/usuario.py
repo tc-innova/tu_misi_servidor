@@ -450,3 +450,83 @@ class ServicioUsuario:
             raise ExcepcionNoEncontrado("Rol de usuario")
         
         await self.db.commit()
+
+    async def listar_tenants_usuario(self, id_usuario: int):
+        query = text("""
+            SELECT 
+                t.id_tenant,
+                t.nombre,
+                ut.activo,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT('id_rol', r.id_rol, 'nombre', r.nombre)
+                    ) FILTER (WHERE r.id_rol IS NOT NULL),
+                    '[]'
+                ) as roles
+            FROM usuarios_tenants ut
+            INNER JOIN tenants t ON ut.id_tenant = t.id_tenant
+            LEFT JOIN usuarios_roles ur ON ut.id_usuario = ur.id_usuario AND ut.id_tenant = ur.id_tenant
+            LEFT JOIN roles r ON ur.id_rol = r.id_rol
+            WHERE ut.id_usuario = :id_usuario
+            GROUP BY t.id_tenant, t.nombre, ut.activo
+            ORDER BY t.nombre
+        """)
+        resultado = await self.db.execute(query, {"id_usuario": id_usuario})
+        return resultado.mappings().all()
+    
+    @manejar_integridad("Relación usuario-tenant", "usuario ya pertenece al tenant")
+    async def agregar_tenant_usuario(self, id_usuario: int, id_tenant: int):
+        query_verificar_usuario = text("SELECT 1 FROM usuarios WHERE id_usuario = :id_usuario")
+        resultado_usuario = await self.db.execute(query_verificar_usuario, {"id_usuario": id_usuario})
+        if not resultado_usuario.first():
+            raise ExcepcionNoEncontrado("Usuario")
+        
+        query_verificar_tenant = text("SELECT 1 FROM tenants WHERE id_tenant = :id_tenant")
+        resultado_tenant = await self.db.execute(query_verificar_tenant, {"id_tenant": id_tenant})
+        if not resultado_tenant.first():
+            raise ExcepcionNoEncontrado("Tenant")
+        
+        query = text("""
+            INSERT INTO usuarios_tenants (id_usuario, id_tenant, activo)
+            VALUES (:id_usuario, :id_tenant, :activo)
+            RETURNING id_usuario, id_tenant, activo
+        """)
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant,
+            "activo": True
+        })
+        await self.db.commit()
+        return resultado.mappings().first()
+    
+    async def remover_tenant_usuario(self, id_usuario: int, id_tenant: int):
+        query = text("""
+            DELETE FROM usuarios_tenants
+            WHERE id_usuario = :id_usuario AND id_tenant = :id_tenant
+            RETURNING id_usuario
+        """)
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant
+        })
+        if not resultado.first():
+            raise ExcepcionNoEncontrado("Relación usuario-tenant")
+        
+        await self.db.commit()
+
+    async def listar_roles_usuario(self, id_usuario: int):
+        query = text("""
+            SELECT 
+                ur.id_usuario,
+                ur.id_tenant,
+                t.nombre as nombre_tenant,
+                ur.id_rol,
+                r.nombre as nombre_rol
+            FROM usuarios_roles ur
+            INNER JOIN roles r ON ur.id_rol = r.id_rol
+            INNER JOIN tenants t ON ur.id_tenant = t.id_tenant
+            WHERE ur.id_usuario = :id_usuario
+            ORDER BY t.nombre, r.nombre
+        """)
+        resultado = await self.db.execute(query, {"id_usuario": id_usuario})
+        return resultado.mappings().all()

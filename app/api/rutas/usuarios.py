@@ -135,6 +135,8 @@ async def eliminar_correo_usuario(
     servicio = ServicioUsuario(db)
     await servicio.eliminar_correo(id_usuario, correo)
 
+
+
 @router.get(
     "/",
     response_model=List[UsuarioRespuesta],
@@ -175,44 +177,3 @@ async def actualizar_usuario(
 ):
     servicio = ServicioUsuario(db)
     return await servicio.actualizar(id_usuario, datos)
-
-@router.get(
-    "/roles/disponibles",
-    response_model=List[RolRespuesta],
-    responses=RESPUESTAS_LISTAR
-)
-async def listar_roles_disponibles(
-    db: AsyncSession = Depends(obtener_db),
-    admin_actual = Depends(obtener_administrador_actual)
-):
-    servicio = ServicioUsuario(db)
-    return await servicio.listar_roles_disponibles()
-
-@router.post(
-    "/{id_usuario}/roles",
-    status_code=201,
-    responses=RESPUESTAS_ASIGNAR
-)
-async def asignar_rol_usuario(
-    id_usuario: int,
-    id_tenant: int,
-    id_rol: int,
-    db: AsyncSession = Depends(obtener_db),
-    admin_actual = Depends(obtener_administrador_actual)
-):
-    servicio = ServicioUsuario(db)
-    return await servicio.asignar_rol(id_usuario, id_tenant, id_rol)
-
-@router.delete(
-    "/{id_usuario}/roles/{id_rol}",
-    status_code=204,
-    responses=RESPUESTAS_ELIMINAR
-)
-async def remover_rol_usuario(
-    id_usuario: int,
-    id_rol: int,
-    db: AsyncSession = Depends(obtener_db),
-    admin_actual = Depends(obtener_administrador_actual)
-):
-    servicio = ServicioUsuario(db)
-    await servicio.remover_rol(id_usuario, id_rol)
