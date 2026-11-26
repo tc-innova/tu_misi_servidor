@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from app.nucleo.seguridad import obtener_hash_contrasenia
+from app.nucleo.seguridad import obtener_hash_contrasenia, verificar_contrasenia
 from app.nucleo.excepciones import ExcepcionNoEncontrado
 from app.nucleo.manejadores import manejar_integridad
 from app.nucleo.auditoria import auditar
@@ -530,3 +530,45 @@ class ServicioUsuario:
         """)
         resultado = await self.db.execute(query, {"id_usuario": id_usuario})
         return resultado.mappings().all()
+
+    async def obtener_perfil(self, id_usuario: int):
+        query = text("""
+            SELECT id_usuario, nombres, apellido_paterno, apellido_materno,
+                   fecha_nacimiento, sexo, ci, usuario, activo
+            FROM usuarios
+            WHERE id_usuario = :id_usuario
+        """)
+        resultado = await self.db.execute(query, {"id_usuario": id_usuario})
+        usuario = resultado.mappings().first()
+        if not usuario:
+            raise ExcepcionNoEncontrado("Usuario")
+        return usuario
+    
+    async def cambiar_contrasenia(self, id_usuario: int, contrasenia_actual: str, contrasenia_nueva: str):
+        query_verificar = text("""
+            SELECT contrasenia
+            FROM usuarios
+            WHERE id_usuario = :id_usuario
+        """)
+        resultado = await self.db.execute(query_verificar, {"id_usuario": id_usuario})
+        usuario = resultado.mappings().first()
+        
+        if not usuario:
+            raise ExcepcionNoEncontrado("Usuario")
+        
+        if not verificar_contrasenia(contrasenia_actual, usuario["contrasenia"]):
+            from app.nucleo.excepciones import ExcepcionNoAutorizado
+            raise ExcepcionNoAutorizado("Contraseña actual incorrecta")
+        
+        contrasenia_hash = obtener_hash_contrasenia(contrasenia_nueva)
+        
+        query_actualizar = text("""
+            UPDATE usuarios
+            SET contrasenia = :contrasenia
+            WHERE id_usuario = :id_usuario
+        """)
+        await self.db.execute(query_actualizar, {
+            "id_usuario": id_usuario,
+            "contrasenia": contrasenia_hash
+        })
+        await self.db.commit()

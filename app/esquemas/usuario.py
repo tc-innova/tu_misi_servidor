@@ -72,3 +72,8 @@ class UsuarioLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class CambiarContrasenia(BaseModel):
+    contrasenia_actual: str
+    contrasenia_nueva: str

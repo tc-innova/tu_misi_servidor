@@ -63,12 +63,14 @@ class ServicioAutenticacion:
         )
         
         if tiene_rol_admin:
-            raise ExcepcionNoAutorizado("Esta ruta es solo para clientes")
+            raise ExcepcionNoAutorizado("Esta ruta es solo para usuarios")
         
         token_acceso = crear_token_acceso(usuario_bd["id_usuario"], tenants)
+        token_refresco = crear_token_refresco(usuario_bd["id_usuario"])
         
         return {
             "token_acceso": token_acceso,
+            "token_refresco": token_refresco,
             "tipo_token": "acceso"
         }
     

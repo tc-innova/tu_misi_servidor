@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.nucleo.base_datos import obtener_db
-from app.nucleo.autenticacion import obtener_administrador_actual
+from app.nucleo.autenticacion import obtener_administrador_actual, obtener_usuario_actual
 from app.nucleo.limitador import limiter
 from app.nucleo.respuestas import (
     RESPUESTAS_CREAR_PUBLICO,
@@ -15,7 +15,8 @@ from app.nucleo.respuestas import (
 )
 from app.esquemas.usuario import (
     UsuarioCrear, UsuarioRespuesta, UsuarioClientePruebaCrear,
-    CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta, RolRespuesta
+    CelularBase, CelularRespuesta, CorreoBase, CorreoRespuesta, RolRespuesta,
+    CambiarContrasenia
 )
 from app.servicios.usuario import ServicioUsuario
 
@@ -177,3 +178,45 @@ async def actualizar_usuario(
 ):
     servicio = ServicioUsuario(db)
     return await servicio.actualizar(id_usuario, datos)
+
+
+@router.get(
+    "/me",
+    response_model=UsuarioRespuesta,
+    responses=RESPUESTAS_OBTENER
+)
+async def obtener_mi_perfil(
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(obtener_usuario_actual)
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.obtener_perfil(usuario_actual["id_usuario"])
+
+@router.put(
+    "/me/password",
+    status_code=204,
+    responses=RESPUESTAS_ACTUALIZAR
+)
+async def cambiar_mi_contrasenia(
+    datos: CambiarContrasenia,
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(obtener_usuario_actual)
+):
+    servicio = ServicioUsuario(db)
+    await servicio.cambiar_contrasenia(
+        usuario_actual["id_usuario"],
+        datos.contrasenia_actual,
+        datos.contrasenia_nueva
+    )
+
+@router.get(
+    "/me/tenants",
+    response_model=List[dict],
+    responses=RESPUESTAS_LISTAR
+)
+async def obtener_mis_tenants(
+    db: AsyncSession = Depends(obtener_db),
+    usuario_actual = Depends(obtener_usuario_actual)
+):
+    servicio = ServicioUsuario(db)
+    return await servicio.listar_tenants_usuario(usuario_actual["id_usuario"])

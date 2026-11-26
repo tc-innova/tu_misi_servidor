@@ -6,6 +6,7 @@ from app.nucleo.respuestas import RESPUESTAS_AUTH
 from app.esquemas.autenticacion import (
     LoginCredenciales,
     TokenAcceso,
+    TokenConRefresco,
     TokenRefrescado
 )
 from app.servicios.autenticacion import ServicioAutenticacion
@@ -29,7 +30,7 @@ async def login_admin(
 
 @router.post(
     "/login/usuario",
-    response_model=TokenAcceso,
+    response_model=TokenConRefresco,
     responses=RESPUESTAS_AUTH
 )
 async def login_usuario(

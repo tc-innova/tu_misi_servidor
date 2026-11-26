@@ -14,6 +14,11 @@ class TokenAcceso(BaseModel):
     token_acceso: str
     tipo_token: str
 
+class TokenConRefresco(BaseModel):
+    token_acceso: str
+    token_refresco: str
+    tipo_token: str
+
 class TokenRefrescado(BaseModel):
     token_acceso: str
     tipo_token: str
