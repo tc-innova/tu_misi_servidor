@@ -77,3 +77,7 @@ class Token(BaseModel):
 class CambiarContrasenia(BaseModel):
     contrasenia_actual: str
     contrasenia_nueva: str
+
+class AsignarRol(BaseModel):
+    id_tenant: int
+    id_rol: int

@@ -4,7 +4,7 @@ from typing import List
 from app.nucleo.base_datos import obtener_db
 from app.nucleo.autenticacion import obtener_administrador_actual
 from app.nucleo.respuestas import RESPUESTAS_LISTAR, RESPUESTAS_ASIGNAR, RESPUESTAS_ELIMINAR
-from app.esquemas.usuario import RolRespuesta
+from app.esquemas.usuario import RolRespuesta, AsignarRol
 from app.servicios.usuario import ServicioUsuario
 
 router = APIRouter()
@@ -41,13 +41,12 @@ async def listar_roles_usuario(
 )
 async def asignar_rol_usuario(
     id_usuario: int,
-    id_tenant: int,
-    id_rol: int,
+    datos: AsignarRol,
     db: AsyncSession = Depends(obtener_db),
     admin_actual = Depends(obtener_administrador_actual)
 ):
     servicio = ServicioUsuario(db)
-    return await servicio.asignar_rol(id_usuario, id_tenant, id_rol)
+    return await servicio.asignar_rol(id_usuario, datos.id_tenant, datos.id_rol)
 
 @router.delete(
     "/usuarios/{id_usuario}/{id_rol}",
