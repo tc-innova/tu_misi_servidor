@@ -126,3 +126,40 @@ class ServicioAutenticacion:
             "token_acceso": token_acceso,
             "tipo_token": "acceso"
         }
+    
+    async def seleccionar_tenant(self, id_usuario: int, id_tenant: int) -> dict:
+        query = text("""
+            SELECT ut.id_tenant, t.nombre, r.nombre as rol
+            FROM usuarios_tenants ut
+            INNER JOIN tenants t ON ut.id_tenant = t.id_tenant
+            LEFT JOIN usuarios_roles ur ON ut.id_usuario = ur.id_usuario AND ut.id_tenant = ur.id_tenant
+            LEFT JOIN roles r ON ur.id_rol = r.id_rol
+            WHERE ut.id_usuario = :id_usuario 
+              AND ut.id_tenant = :id_tenant 
+              AND ut.activo = TRUE
+        """)
+        
+        resultado = await self.db.execute(query, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant
+        })
+        filas = resultado.mappings().all()
+        
+        if not filas:
+            raise ExcepcionNoAutorizado("No tienes acceso a este negocio")
+        
+        roles = [fila["rol"] for fila in filas if fila["rol"]]
+        nombre_tenant = filas[0]["nombre"]
+        
+        tenant_seleccionado = [{
+            "id_tenant": id_tenant,
+            "nombre": nombre_tenant,
+            "roles": roles
+        }]
+        
+        token_acceso = crear_token_acceso(id_usuario, tenant_seleccionado)
+        
+        return {
+            "token_acceso": token_acceso,
+            "tipo_token": "acceso"
+        }

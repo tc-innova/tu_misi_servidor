@@ -87,7 +87,7 @@ async def obtener_usuario_actual(
     id_usuario = payload.get("id_usuario")
     tenants = payload.get("tenants", [])
     
-    if not id_usuario or not tenants:
+    if not id_usuario:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token incompleto"

@@ -39,3 +39,20 @@
 1. Admin crea usuario → Crea tenant (negocio) + usuario + relación usuarios_tenants + rol asignado
 2. Usuario puede hacer login inmediatamente con su negocio
 3. Usuario puede crear más negocios o ser invitado a otros tenants posteriormente
+
+## Autenticación y Tokens
+- Login separado: `/auth/login/admin` (tabla administradores) y `/auth/login/usuario` (tabla usuarios)
+- Token admin: `{"id_administrador": N, "tipo": "acceso", "es_admin": true}` - sin refresh token
+- Token usuario inicial: `{"id_usuario": N, "tenants": [{id_tenant, nombre, roles}...], "tipo": "acceso"}` - con refresh token
+- Token usuario con tenant seleccionado: `{"id_usuario": N, "tenants": [{id_tenant, nombre, roles}], "tipo": "acceso"}` - solo 1 tenant
+- Ruta `/auth/select-tenant` permite al usuario generar token con un solo tenant para trabajar
+- Rutas `/me` funcionan con cualquier token de usuario (con uno o varios tenants)
+- Rutas de negocio (productos, ventas, clientes) requieren token con tenant seleccionado
+
+## Flujo de Selección de Tenant
+1. Usuario hace login → Token con TODOS sus tenants
+2. Usuario consulta sus tenants: `GET /usuarios/me/tenants`
+3. Usuario selecciona tenant: `POST /auth/select-tenant` → Token con solo ese tenant
+4. Usuario trabaja en ese tenant (crear productos, ventas, etc.)
+5. Usuario puede cambiar de tenant repitiendo paso 3
+6. Cerrar sesión o dejar expirar token requiere nuevo login

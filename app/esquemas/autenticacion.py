@@ -22,3 +22,6 @@ class TokenConRefresco(BaseModel):
 class TokenRefrescado(BaseModel):
     token_acceso: str
     tipo_token: str
+
+class SeleccionarTenant(BaseModel):
+    id_tenant: int

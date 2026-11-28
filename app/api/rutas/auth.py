@@ -7,8 +7,10 @@ from app.esquemas.autenticacion import (
     LoginCredenciales,
     TokenAcceso,
     TokenConRefresco,
-    TokenRefrescado
+    TokenRefrescado,
+    SeleccionarTenant
 )
+from app.nucleo.autenticacion import obtener_usuario_actual
 from app.servicios.autenticacion import ServicioAutenticacion
 
 router = APIRouter()
@@ -71,3 +73,18 @@ async def refrescar_token(
     servicio = ServicioAutenticacion(db)
     return await servicio.refrescar_token(id_usuario)
 
+@router.post(
+    "/select-tenant",
+    response_model=TokenAcceso,
+    responses=RESPUESTAS_AUTH
+)
+async def seleccionar_tenant(
+    datos: SeleccionarTenant,
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+    db: AsyncSession = Depends(obtener_db)
+):
+    servicio = ServicioAutenticacion(db)
+    return await servicio.seleccionar_tenant(
+        usuario_actual["id_usuario"],
+        datos.id_tenant
+    )
