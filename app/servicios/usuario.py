@@ -415,12 +415,24 @@ class ServicioUsuario:
             from app.nucleo.excepciones import ExcepcionNoAutorizado
             raise ExcepcionNoAutorizado("No se puede asignar rol de administrador")
         
-        query_verificar = text("""
+        query_verificar_usuario = text("""
             SELECT 1 FROM usuarios WHERE id_usuario = :id_usuario
         """)
-        resultado = await self.db.execute(query_verificar, {"id_usuario": id_usuario})
+        resultado = await self.db.execute(query_verificar_usuario, {"id_usuario": id_usuario})
         if not resultado.scalar():
             raise ExcepcionNoEncontrado("Usuario")
+        
+        query_verificar_tenant = text("""
+            SELECT 1 FROM usuarios_tenants 
+            WHERE id_usuario = :id_usuario AND id_tenant = :id_tenant
+        """)
+        resultado_tenant = await self.db.execute(query_verificar_tenant, {
+            "id_usuario": id_usuario,
+            "id_tenant": id_tenant
+        })
+        if not resultado_tenant.scalar():
+            from app.nucleo.excepciones import ExcepcionNoAutorizado
+            raise ExcepcionNoAutorizado("El usuario no pertenece a este tenant")
         
         query_insert = text("""
             INSERT INTO usuarios_roles (id_usuario, id_tenant, id_rol)
